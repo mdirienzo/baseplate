@@ -1,7 +1,74 @@
 @@include('includes/header.html')
-	<div class="container">
-    <img src="images/baseplate-logo.svg" alt="Baseplate Logo" class="branding">
-    <p>A sensible baseline for simple web projects using: <a href="https://github.com/h5bp/html5-boilerplate">HTML5 Boilerplate</a>, <a href="http://sass-lang.com/">SASS</a>, <a href="http://bourbon.io/">Bourbon</a>, <a href="http://neat.bourbon.io/">Neat</a>, and <a href="http://gulpjs.com/">Gulp</a>.</p>
-    <section>
-  </div>
+<div class="branding">
+    @@include('includes/logo.html')
+</div>
+<section class="welcome">
+    <div class="container">
+        <div class="intro">
+            <h1>Say hello to Baseplate&hellip;</h1>
+            <p>Baseplate is a simple and sensible baseline for web projects and is perfect for everything from quick protoyping to
+                production-ready sites. It is intentionally sparse in its feature set and allows you to quickly and easily bolt
+                on the additional functionality you may need.</p>
+        </div>
+        <div class="download">
+            <a class="btn btn--lrg" href="https://github.com/demersdesigns/baseplate/archive/master.zip">Download Baseplate 1.0.0</a>
+            <a class="btn btn--lrg btn--outline" href="https://github.com/demersdesigns/baseplate">View on Github</a>
+        </div>
+    </div>
+</section>
+<section class="features">
+    <div class="container">
+        <h2>Sounds great! Tell me more.</h2>
+        <p>Baseplate combines the best parts of a number of open-source projects including:</p>
+        <ul>
+            <li><a href="https://html5boilerplate.com/" title="HTML5 Boilerplate"><img src="images/boilerplate-logo.svg" alt="HTML5 Boilerplate"><span class="feature-title">HTML5 Boilerplate</span></a></li>
+            <li><a href="http://sass-lang.com/" title="Sass"><img src="images/sass-logo.svg" alt="Sass"><span class="feature-title">Sass</span></a></li>
+            <li><a href="http://bourbon.io/" title="Bourbon"><img src="images/bourbon-logo.svg" alt="Bourbon"><span class="feature-title">Bourbon</span></a></li>
+            <li><a href="http://neat.bourbon.io/" title="Neat"><img src="images/neat-logo.svg" alt="Neat"><span class="feature-title">Neat</span></a></li>
+            <li><a href="http://gulpjs.com" title="Gulp"><img src="images/gulp-logo.svg" alt="Gulp"><span class="feature-title">Gulp</span></a></li>
+            <li><a href="http://browsersync.io" title="Browsersync"><img src="images/browsersync-logo.svg" alt="Browsersync"><span class="feature-title">Browsersync</span></a></li>
+        </ul>
+    </div>
+</section>
+<section class="capabilities">
+    <div class="container">
+        <h2>So, with all those great things included, what can it do?</h2>
+        <p>Using Baseplate, you can quickly get up and running with a front-end development environment. There are two sets of tasks one for local development and one for production.</p>
+        <div class="feature-block--half">
+            <p><strong>The development tasks include:</strong></p>
+            <ul>
+                <li>HTML includes</li>
+                <li>Sass sourcemaps and compilation</li>
+                <li>JavaScript linting</li>
+                <li>Live-reloading in the browser</li>
+            </ul>
+        </div>
+        <div class="feature-block--half">
+            <p><strong>The production tasks include:</strong></p>
+            <ul>
+                <li>HTML minification</li>
+                <li>JavaScript uglification and concatenation</li>
+                <li>Image optimization</li>
+                <li>CSS minification</li>
+            </ul>
+        </div>
+    </div>
+</section>
+<section class="get-started">
+    <div class="container">
+        <h2>That all sounds awesome, but how do I get started?</h2>
+        <p>This project makes the following assumptions:</p>
+        <ul>
+            <li>You have Node and NPM installed. If you don't, you can install Node, which includes NPM by <a href="https://nodejs.org/en/" title="Download Node and NPM">downloading it here.</a>
+            <li>You have Gulp installed globally. If you don't, you can install it using NPM by typing <code>npm install -g gulp</code> in a terminal window.</li>
+        </ul>
+        <p>In a terminal window, run <code>npm install</code> to get all of the project dependencies.</p>
+        <p>When all of the dependencies have been installed, you can run <code>gulp dev</code> to fire up the development environment and start building. You should add new files and edit the existing files in the <code>app</code> folder. When you save, the browser window will update with your changes. When you are ready to deploy your changes, you can run <code>gulp prod</code>, which will create production-ready files in a newly created <code>public</code> folder.</p>
+    </div>
+</section>
+<footer>
+    <div class="container">
+        <p>Made with &#10084; by <a href="https://www.twitter.com/demersdesigns" title="@demersdesigns" class="reverse">@demersdesigns</a> in Boston. Requests? Changes? Ideas? <a href="https://github.com/demersdesigns/baseplate" title="Baseplate on Github" class="reverse">Check out this project on Github!</p>
+    </div>
+</footer>
 @@include('includes/footer.html')

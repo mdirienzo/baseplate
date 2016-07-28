@@ -30,6 +30,8 @@
     "gulp-sourcemaps": "^1.6.0",
     "gulp-uglify": "^1.5.3",
     "gulp-usemin": "^0.3.21",
+    "gulp-postcss": "^6.1.1",
+    "postcss-responsive-type": "0.4.0",
     "jquery": "^2.2.1",
     "jshint": "^2.9.1",
     "jshint-stylish": "^2.1.0",

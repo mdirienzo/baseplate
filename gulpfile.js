@@ -1,168 +1,165 @@
 //** NPM Dependencies **//
 var gulp        = require('gulp'),
     del         = require('del'),
+    eslint      = require('gulp-eslint'),
     include     = require('gulp-file-include'),
     sass        = require('gulp-sass'),
     autoprefix  = require('gulp-autoprefixer'),
     minifyCSS   = require('gulp-clean-css'),
-    stylish     = require('jshint-stylish'),
-    jshint      = require('gulp-jshint'),
     uglify      = require('gulp-uglify'),
     concat      = require('gulp-concat'),
     sourcemaps  = require('gulp-sourcemaps'),
-    usemin      =  require('gulp-usemin'),
+    usemin      = require('gulp-usemin'),
     imagemin    = require('gulp-imagemin'),
-    htmlmin = require('gulp-htmlmin'),
+    merge       = require('merge-stream'),
+    htmlmin     = require('gulp-htmlmin'),
     runSequence = require('run-sequence'),
     plumber     = require('gulp-plumber'),
-    browserSync = require('browser-sync'),
-    reload      = browserSync.reload;
-   //yargs       = require('yargs').argv;
+    postcss     = require('gulp-postcss'),
+    purifycss   = require('gulp-purifycss'),
+    exec        = require('child_process').exec, // Run command line options.
+    rename      = require('gulp-rename'),
+    babel       = require('gulp-babel');
+
+var supportedBrowsers = '';
 
 //** Path Variables **//
-var rootPath    = 'app/',
-    tmpPath = '.tmp/',
-    distPath = 'public/',
-    htmlSource = 'app/html/*.html',
-    htmlIncludesSource = 'app/html/**/*.html',
-    stylesSource = 'app/styles/**/*.scss',
-    scriptsSource = 'app/scripts/**/*.js',
-    imagesSource = 'app/images/**/*',
-    tmpImagesSource = '.tmp/images/**/*',
-    fontsSource = 'app/fonts/**/*';
+var rootPath      = 'src/',
+    buildPath     = 'build/'
+    tmpPath       = '.tmp/',
+    distPath      = rootPath + 'public/',
+    resourcesPath = rootPath + 'resources/',
 
-//** Dev Task **//
-//Compile HTML includes and copy to tmp folder
-gulp.task('html', function() {
-    return gulp.src(htmlSource)
-        .pipe(plumber())
-        .pipe(include({
-            prefix: '@@',
-            basepath: '@file'
-        }))
-        .pipe(htmlmin({ collapseWhitespace: true }))
-        .pipe(gulp.dest(tmpPath))
-        .pipe(reload({ stream: true }));
+    htmlSource    = resourcesPath + 'views/**/*.html',
+    scriptsSource = resourcesPath + 'scripts/**/*.js'
+    stylesSource  = resourcesPath + 'styles/**/*.scss',
+    imagesSource  = resourcesPath + 'images/**/*.*';
+    fontsSource   = resourcesPath + 'fonts/**/*.*';
+
+/* Table of Contents:
+    - Core Tasks
+    - Dev Tasks
+    - Prod Tasks
+    - Common Tasks
+*/
+
+/** CORE TASKS **/
+
+//Run the dev:build task and watch for changes
+gulp.task('dev', ['dev:build'], function () {
+    gulp.watch(stylesSource,  ['dev:styles']);
+    gulp.watch(stylesSource,  ['dev:styles']);
+    gulp.watch(scriptsSource, ['dev:scripts']);
+    gulp.watch(imagesSource,  ['images']);
+    gulp.watch(fontsSource,   ['fonts']);
 });
 
-//Compile and add sourcemap to styles
-gulp.task('styles', function () {
+//Runs the dev tasks.
+gulp.task('dev:build', function(cb) {
+    runSequence('common:build', ['dev:styles', 'dev:scripts'], cb);
+});
+
+//create a prod task that runs devbuild then runs the other prod tasks above
+gulp.task('prod', function(cb) {
+    runSequence('common:build', ['prod:styles', 'prod:scripts'], cb);
+});
+
+//create a prod task that runs devbuild then runs the other prod tasks above
+gulp.task('common:build', function(cb) {
+    runSequence('clean', ['images', 'fonts'], cb);
+});
+
+
+/** DEV SPECIFIC TASKS **/
+
+// Build the styles for the dev environment. Will sourcemap, prefix, and concat
+// the files into both the light/dark themes.
+gulp.task('dev:styles', function() {
+    return gulp.src(scriptsSource)
+      .pipe(sass({ outputStyle: 'compact', errLogToConsole: true }))
+      .pipe(sourcemaps.init())
+          .pipe(autoprefix())
+          .pipe(concat('styles.min.css'))
+      .pipe(sourcemaps.write())
+      .pipe(gulp.dest(distPath + '/css/'));
+});
+
+// Lint scripts and basic concat.
+gulp.task('dev:scripts', function() {
+    return gulp.src(scriptsSource)
+      .pipe(sourcemaps.init())
+        .pipe(eslint('.eslintrc'))
+        .pipe(eslint.format())
+        .pipe(babel({presets:['latest']}))
+        .pipe(concat('scripts.min.js'))
+      .pipe(sourcemaps.write())
+      .pipe(gulp.dest(distPath + 'js/'));
+});
+
+
+/** PRODUCTION SPECIFIC TASKS **/
+
+// Combine the the javascript listed at the end of the file appropriately and
+// then minify them.
+gulp.task('prod:scripts', function() {
+    return gulp.src(scriptsSource)
+      .pipe(concat('scripts.min.js'))
+      .pipe(uglify())
+      .pipe(gulp.dest(distPath + 'js/'));
+});
+
+// Full minification and excess CSS removal in the compiled css.
+gulp.task('prod:styles', function() {
     return gulp.src(stylesSource)
-        .pipe(plumber())
-        .pipe(sourcemaps.init())
-        .pipe(sass({ outputStyle: 'compact', errLogToConsole: true }))
+      .pipe(sass({ outputStyle: 'compressed', errLogToConsole: true }))
         .pipe(autoprefix())
-        .pipe(sourcemaps.write())
-        .pipe(gulp.dest(tmpPath + '/styles'))
-        .pipe(browserSync.stream({ match: '**/*.css' }));
+        .pipe(concat('styles.min.css'))
+        .pipe(purifycss([scriptsSource, htmlSource])) // Can also add PHP here.
+        .pipe(minifyCSS())
+      .pipe(gulp.dest(distPath + '/css/'));
 });
 
-//Copy jQuery from node_modules to dev
-gulp.task('copyJquery', function() {
-    return gulp.src('node_modules/jquery/dist/jquery.min.js')
-        .pipe(gulp.dest(tmpPath + '/scripts/vendor'));
-});
-
-//Lint scripts
-gulp.task('jshint', function () {
-    return gulp.src([scriptsSource, '!app/scripts/vendor/**/*.js'])
-        .pipe(jshint())
-        .pipe(jshint.reporter(stylish))
-        .pipe(gulp.dest(tmpPath + 'scripts'))
-        .pipe(browserSync.stream({ match: '**/*.js' }));
-});
-
-//Copy images
-gulp.task('copyImages', function() {
-    return gulp.src(imagesSource)
-        .pipe(gulp.dest(tmpPath + 'images'));
-});
-
-//Optimize Images
-//this is a separate task because we don't want to optimize
-//our svg files automatically
-gulp.task('optimizeImages', function() {
-    return gulp.src(tmpImagesSource + '*.{gif,jpg,png}')
-        .pipe(imagemin())
-        .pipe(gulp.dest(tmpPath + 'images'))
-        .pipe(reload({ stream: true }));
-});
+/** COMMON TASKS **/
 
 //Copy images to tmp folder then, optimize
 gulp.task('images', function(cb) {
     runSequence('copyImages', 'optimizeImages', cb);
 });
 
-//Fire up a dev server
-gulp.task('dev:serve', function() {
-    browserSync({
-        server: {
-            baseDir: [rootPath, tmpPath]
-        }
-    });
+//Copy images. We copy to tmp path in case we want to pull in resources
+//from somewhere else.
+gulp.task('copyImages', function() {
+    return gulp.src(imagesSource)
+        .pipe(gulp.dest(tmpPath + '/images'));
 });
 
-//Runs the dev tasks listed above
-gulp.task('dev:build', function(cb) {
-    runSequence(['html', 'styles', 'copyJquery', 'jshint', 'images'], cb);
+//Optimize Images
+//this is a separate task because we don't want to optimize
+//our svg files automatically
+gulp.task('optimizeImages', function() {
+    return gulp.src(tmpPath + '/images/*.{gif,jpg,png}')
+        .pipe(imagemin())
+        .pipe(gulp.dest(distPath + '/images'));
 });
 
-//Run the dev:build task, fire up a local server, and watch for changes
-gulp.task('dev', ['dev:build', 'dev:serve'], function () {
-    gulp.watch([htmlSource, htmlIncludesSource], ['html']);
-    gulp.watch(stylesSource, ['styles']);
-    gulp.watch(scriptsSource, ['jshint']);
-    gulp.watch(imagesSource, ['copyImages']);
-});
-
-//** Production Tasks **//
-
-//Clear out the dist folder before doing a build
-gulp.task('prod:clean', function () {
-    return del.sync(
-        ['public/**', '!public']
-    );
-});
-
-//Minify and add html to dist
-gulp.task('prod:html', function() {
-    return gulp.src(tmpPath + '*.html')
-        .pipe(gulp.dest(distPath));
-});
-
-//Combine scripts and css wrapped in usemin block
-gulp.task('prod:useMin', function () {
-    return gulp.src(tmpPath + '*.html')
-        .pipe(usemin({
-            js: [sourcemaps.init(), uglify(), sourcemaps.write()],
-            css: [minifyCSS(), 'concat']
-        }))
-        .pipe(gulp.dest(distPath));
-});
-
-//Process images
-gulp.task('prod:images', function() {
-    return gulp.src(tmpImagesSource)
-        .pipe(gulp.dest(distPath + 'images'));
-});
-
-//Process fonts
-gulp.task('prod:fonts', function() {
+// Process fonts
+gulp.task('fonts', function() {
     return gulp.src(fontsSource)
         .pipe(gulp.dest(distPath + 'fonts'));
 });
 
 
-//create a prod task that runs devbuild then runs the other prod tasks above
-gulp.task('prod', function(cb) {
-    runSequence('prod:clean', 'dev:build', ['prod:useMin', 'prod:html', 'prod:images', 'prod:fonts'], cb);
-});
-
-//Fire up a prod server to make sure nothing is broken in the prod code
-gulp.task('prod:serve', function () {
-    browserSync({
-        server: {
-            baseDir: distPath
-        }
-    });
+//Clear out the dist folder before doing a build
+// TODO: Make the (public/) folder agnostic.
+gulp.task('clean', function () {
+    return del.sync(
+        // For Windows systems.
+        [distPath + 'css/**/*.*',
+        distPath + 'js/**/*.*',
+        distPath + 'images/**/*.*',
+        distPath + 'fonts/**/*.*',
+        tmpPath + '**/*.*']
+        // For Unix systems.
+        // ['public/**', '!public']
+    );
 });
